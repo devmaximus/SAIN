@@ -108,22 +108,28 @@ public class Squad
         float baseChance = 25f;
         float finalChance = baseChance + (squadCoordination * 15f);
 
+        var reporter = reportedEnemy.Bot;
+
         foreach (var member in Members.Values)
         {
-            if (EFTMath.RandomBool(finalChance))
-            {
-                if (
-                    member?.Player != null
-                    && reportedEnemy.Player != null
-                    && reportedEnemy.EnemyPlayer != null
-                    && reportedEnemy.Player.ProfileId != member.ProfileId
-                )
-                {
-                    member
-                        .EnemyController.GetEnemy(reportedEnemy.EnemyPlayer.ProfileId, true)
-                        ?.EnemyPositionReported(place, seen, currentTime);
-                }
-            }
+            if (member == null || member.Player == null)
+                continue;
+
+            if (reportedEnemy.Player == null || reportedEnemy.EnemyPlayer == null)
+                continue;
+
+            if (reportedEnemy.Player.ProfileId == member.ProfileId)
+                continue;
+
+            if (!isInCommunicationRange(reporter, member))
+                continue;
+
+            if (!EFTMath.RandomBool(finalChance))
+                continue;
+
+            member
+                .EnemyController.GetEnemy(reportedEnemy.EnemyPlayer.ProfileId, true)
+                ?.EnemyPositionReported(place, seen, currentTime);
         }
     }
 
