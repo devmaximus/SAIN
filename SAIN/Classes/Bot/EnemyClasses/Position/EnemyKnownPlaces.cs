@@ -262,10 +262,12 @@ public class EnemyKnownPlaces
         if (dispersion < 0.5f)
             return reportedPosition;
 
+        float angle = Random.Range(0f, Mathf.PI * 2f);
+        float radius = Random.Range(0f, dispersion);
         Vector3 offset = new Vector3(
-            Random.Range(-dispersion, dispersion),
+            Mathf.Cos(angle) * radius,
             0f,
-            Random.Range(-dispersion, dispersion)
+            Mathf.Sin(angle) * radius
         );
 #if DEBUG
         Logger.LogDebug($"[PerceptionGate] Squad position DEGRADED: dist={distToReporter:F1}m, dispersion={dispersion:F1}m, offset={offset.magnitude:F1}m");

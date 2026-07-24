@@ -225,6 +225,10 @@ public class HearingInputClass : BotSubClass<SAINHearingSensorClass>, IBotClass
         {
             BaseClass.ReactToHeardSound(Sound);
         }
+        else if (Sound.IsGunShot)
+        {
+            BaseClass.ReactToHeardSound(Sound);
+        }
         else
         {
             OnFriendlySoundHeard?.Invoke(Sound);
