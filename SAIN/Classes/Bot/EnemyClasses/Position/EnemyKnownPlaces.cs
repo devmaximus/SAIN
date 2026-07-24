@@ -252,15 +252,34 @@ public class EnemyKnownPlaces
         return LastSeenPlace;
     }
 
+    private const float SQUAD_DISPERSION_FACTOR = 12.5f;
+    private const float SQUAD_DISPERSION_MAX = 15f;
+
+    private Vector3 ApplySquadDispersion(Vector3 reportedPosition)
+    {
+        float distToReporter = (reportedPosition - Enemy.Bot.Position).magnitude;
+        float dispersion = Mathf.Min(distToReporter / SQUAD_DISPERSION_FACTOR, SQUAD_DISPERSION_MAX);
+        if (dispersion < 0.5f)
+            return reportedPosition;
+
+        Vector3 offset = new Vector3(
+            Random.Range(-dispersion, dispersion),
+            0f,
+            Random.Range(-dispersion, dispersion)
+        );
+        return reportedPosition + offset;
+    }
+
     public void UpdateSquadSeenPlace(EnemyPlace memberPlace, float currentTime)
     {
         if (Enemy.IsVisible)
         {
             return;
         }
+        Vector3 dispersedPosition = ApplySquadDispersion(memberPlace.Position);
         if (LastSquadSeenPlace == null)
         {
-            LastSquadSeenPlace = new EnemyPlace(_placeData, memberPlace.Position, true, EEnemyPlaceType.Vision, null)
+            LastSquadSeenPlace = new EnemyPlace(_placeData, dispersedPosition, true, EEnemyPlaceType.Vision, null)
             {
                 HasSeenSquad = true,
             };
@@ -268,7 +287,7 @@ public class EnemyKnownPlaces
         }
         else
         {
-            LastSquadSeenPlace.UpdatePosition(memberPlace.Position);
+            LastSquadSeenPlace.UpdatePosition(dispersedPosition);
         }
         SetLastKnown(LastSquadSeenPlace, currentTime);
     }
@@ -297,17 +316,18 @@ public class EnemyKnownPlaces
             return;
         }
 
+        Vector3 dispersedPosition = ApplySquadDispersion(memberPlace.Position);
         if (LastSquadHeardPlace != null)
         {
             LastSquadHeardPlace.IsDanger = memberPlace.IsDanger;
             LastSquadHeardPlace.SoundType = memberPlace.SoundType;
-            LastSquadHeardPlace.UpdatePosition(memberPlace.Position);
+            LastSquadHeardPlace.UpdatePosition(dispersedPosition);
         }
         else
         {
             LastSquadHeardPlace = new EnemyPlace(
                 _placeData,
-                memberPlace.Position,
+                dispersedPosition,
                 memberPlace.IsDanger,
                 memberPlace.PlaceType,
                 memberPlace.SoundType
