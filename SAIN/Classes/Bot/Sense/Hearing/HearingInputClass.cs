@@ -98,6 +98,22 @@ public class HearingInputClass : BotSubClass<SAINHearingSensorClass>, IBotClass
         return false;
     }
 
+    private const float SOUND_ID_CERTAIN_DISTANCE = 15f;
+    private const float SOUND_ID_IMPOSSIBLE_DISTANCE = 120f;
+    private const float SOUND_ID_SUPPRESSED_PENALTY = 0.4f;
+
+    private bool TrySoundIdentification(float distance, bool isSuppressed)
+    {
+        if (distance <= SOUND_ID_CERTAIN_DISTANCE)
+            return true;
+
+        float identifyChance = 1f - Mathf.InverseLerp(SOUND_ID_CERTAIN_DISTANCE, SOUND_ID_IMPOSSIBLE_DISTANCE, distance);
+        if (isSuppressed)
+            identifyChance *= SOUND_ID_SUPPRESSED_PENALTY;
+
+        return EFTMath.RandomBool(identifyChance * 100f);
+    }
+
     public void CheckAddSoundToCache(SoundEvent Sound, float PlayerDistance)
     {
         if (Bot.Hearing.SoundInput.IsIgnoringSounds(Sound.SoundType.IsGunShot()))
@@ -111,6 +127,13 @@ public class HearingInputClass : BotSubClass<SAINHearingSensorClass>, IBotClass
             {
                 return;
             }
+
+            bool isSuppressed = Sound.SoundType == SAINSoundType.SuppressedShot;
+            if (enemy != null && !TrySoundIdentification(PlayerDistance, isSuppressed))
+            {
+                enemy = null;
+            }
+
             AISoundData Data = new(Sound, Bot, PlayerDistance, enemy);
             switch (Sound.SoundType)
             {
