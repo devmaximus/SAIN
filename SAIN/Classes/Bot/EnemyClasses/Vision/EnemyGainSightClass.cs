@@ -195,14 +195,18 @@ public static class EnemyGainSightClass
         return result;
     }
 
+    private const float REPEAT_SEEN_DECAY_TIME = 30f;
+
     private static float CalcRepeatSeenCoef(EnemyKnownPlaces places)
     {
         EnemyPlace lastSeen = places.LastSeenPlace;
         float result = 1f;
         if (lastSeen != null)
         {
+            float timeDecay = Mathf.InverseLerp(0f, REPEAT_SEEN_DECAY_TIME, lastSeen.TimeSincePositionUpdated);
+            float effectiveDistance = Mathf.Lerp(0f, DIST_SEEN_MAX_DIST, timeDecay);
             result *= CalcVisionSpeedPositional(
-                lastSeen.DistanceToEnemyRealPosition,
+                effectiveDistance,
                 DIST_SEEN_MIN_COEF,
                 DIST_SEEN_MIN_DIST,
                 DIST_SEEN_MAX_DIST,
@@ -212,8 +216,10 @@ public static class EnemyGainSightClass
         EnemyPlace lastHeard = places.LastHeardPlace;
         if (lastHeard != null)
         {
+            float timeDecay = Mathf.InverseLerp(0f, REPEAT_SEEN_DECAY_TIME, lastHeard.TimeSincePositionUpdated);
+            float effectiveDistance = Mathf.Lerp(0f, DIST_HEARD_MAX_DIST, timeDecay);
             result *= CalcVisionSpeedPositional(
-                lastHeard.DistanceToEnemyRealPosition,
+                effectiveDistance,
                 DIST_HEARD_MIN_COEF,
                 DIST_HEARD_MIN_DIST,
                 DIST_HEARD_MAX_DIST,
