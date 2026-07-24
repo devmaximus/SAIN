@@ -212,6 +212,10 @@ public static class EnemyGainSightClass
                 DIST_SEEN_MAX_DIST,
                 SeenSpeedCheck.Vision
             );
+#if DEBUG
+            if (timeDecay > 0.1f)
+                Logger.LogDebug($"[PerceptionGate] GainSight decay (vision): timeSince={lastSeen.TimeSincePositionUpdated:F1}s, decay={timeDecay:F2}, effectiveDist={effectiveDistance:F1}m, modifier={result:F3}");
+#endif
         }
         EnemyPlace lastHeard = places.LastHeardPlace;
         if (lastHeard != null)

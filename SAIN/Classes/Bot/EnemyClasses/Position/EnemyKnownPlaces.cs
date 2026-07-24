@@ -267,6 +267,9 @@ public class EnemyKnownPlaces
             0f,
             Random.Range(-dispersion, dispersion)
         );
+#if DEBUG
+        Logger.LogDebug($"[PerceptionGate] Squad position DEGRADED: dist={distToReporter:F1}m, dispersion={dispersion:F1}m, offset={offset.magnitude:F1}m");
+#endif
         return reportedPosition + offset;
     }
 

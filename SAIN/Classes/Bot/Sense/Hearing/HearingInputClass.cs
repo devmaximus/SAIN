@@ -131,6 +131,9 @@ public class HearingInputClass : BotSubClass<SAINHearingSensorClass>, IBotClass
             bool isSuppressed = Sound.SoundType == SAINSoundType.SuppressedShot;
             if (enemy != null && !TrySoundIdentification(PlayerDistance, isSuppressed))
             {
+#if DEBUG
+                Logger.LogDebug($"[PerceptionGate] Sound ID FAILED: {Bot.Player?.Profile?.Nickname} heard {Sound.SoundType} at {PlayerDistance:F0}m (suppressed={isSuppressed}) — enemy NOT identified");
+#endif
                 enemy = null;
             }
 

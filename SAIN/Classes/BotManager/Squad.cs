@@ -122,11 +122,19 @@ public class Squad
                 continue;
 
             if (!isInCommunicationRange(reporter, member))
+            {
+#if DEBUG
+                Logger.LogDebug($"[PerceptionGate] Squad position share BLOCKED: {reporter.Player?.Profile?.Nickname} -> {member.Player?.Profile?.Nickname} (out of comms range)");
+#endif
                 continue;
+            }
 
             if (!EFTMath.RandomBool(finalChance))
                 continue;
 
+#if DEBUG
+            Logger.LogDebug($"[PerceptionGate] Squad position SHARED: {reporter.Player?.Profile?.Nickname} -> {member.Player?.Profile?.Nickname} (seen={seen})");
+#endif
             member
                 .EnemyController.GetEnemy(reportedEnemy.EnemyPlayer.ProfileId, true)
                 ?.EnemyPositionReported(place, seen, currentTime);
