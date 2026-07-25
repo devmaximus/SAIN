@@ -59,12 +59,13 @@ public class EnemyVisionDistanceClass : EnemyBase
         float defaultVisDist = BotOwner.LookSensor.VisibleDist;
         float result = (defaultVisDist * finalModifier) - defaultVisDist;
 
-        // if (EnemyPlayer.IsYourPlayer &&
-        //     _nextLogTime < Time.time)
-        // {
-        //     _nextLogTime = Time.time + 0.5f;
-        //     Logger.LogWarning($"Result: [{result}] : Final Mod: {finalModifier} : defaultVisDist {defaultVisDist} : sprint {sprint} : gear {gear} : angle {angle} : flareMod {flareMod} : positionalFlareMod {positionalFlareMod} : underFire {underFire} : aiReduction {aiReduction} ");
-        // }
+#if PLAYER_VISION_TRACE
+        if (EnemyPlayer.IsYourPlayer && _nextLogTime < Time.time)
+        {
+            _nextLogTime = Time.time + 0.5f;
+            Logger.LogWarning($"[VisDist] result={result:F1} finalMod={finalModifier:F2} defaultVisDist={defaultVisDist:F0} move={moveMod:F2} gear={gearMod:F2} angle={angleMod:F2} flare={flareMod:F2} posFlare={positionalFlareMod:F2} underFire={underFire:F2}");
+        }
+#endif
 
         return result;
     }
@@ -74,11 +75,12 @@ public class EnemyVisionDistanceClass : EnemyBase
         float velocity = Enemy.Vision.EnemyVelocity;
         float result = Mathf.Lerp(0.9f, _sprintMod, velocity);
 
-        // if (EnemyPlayer.IsYourPlayer &&
-        //     _nextLogTime < Time.time)
-        // {
-        //     Logger.LogWarning($"Velocity: [{velocity}] : Vision Distance mod: {result}");
-        // }
+#if PLAYER_VISION_TRACE
+        if (EnemyPlayer.IsYourPlayer && _nextLogTime < Time.time)
+        {
+            Logger.LogWarning($"[VisDist:Move] velocity={velocity:F2} mod={result:F2}");
+        }
+#endif
 
         return result;
     }
@@ -152,4 +154,7 @@ public class EnemyVisionDistanceClass : EnemyBase
     private float _nextCalcTime;
     private float _calcFreq = 0.05f;
     private float _visionDist;
+#if PLAYER_VISION_TRACE
+    private float _nextLogTime;
+#endif
 }
