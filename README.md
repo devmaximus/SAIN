@@ -34,6 +34,32 @@ A Bepinex plugin for Single-player Escape From Tarkov that replaces the combat A
 	- Such as bots rushing an enemy if they hear them healing.
 - [Bot Hearing Revamp]: Bots are much more nuanced in how they hear enemies, the distance a bot can hear things like footsteps is affected by their own health condition, movement, walls and obstacles between them, weather conditions.
 
+## Fork changes (devmaximus/SAIN — feature/optics-vision-cap)
+
+### Perception fairness — optics-based detection range cap
+Bots can no longer detect at sniper ranges with iron sights. Detection range is now gated by equipped optic magnification (naked eye 150m, 2-4x 250m, 6x+ 400m). All thresholds configurable via F12.
+
+### Vision system refactoring
+- Pure math extracted to `VisionMath.cs` — all thresholds are configurable parameters, zero hardcoded magic values
+- 37 unit tests covering optics range, angle modifiers, positional speed, lerp math
+- Commented-out debug code replaced with `#if DEBUG_ENEMYPLAYER_ISYOURPLAYER` conditional compilation
+- New `OpticsVisionSettings` and expanded `PeripheralVisionSettings` config blocks
+
+### Perception gates
+- Evidence-based forget timers replace flat 400s cap
+- Distance-based sound source identification probability
+- Squad position sharing gated by communication range + position degrades with distance
+- BSG `ReportAboutEnemy` gated by 50m comms range (prevents cross-map telepathy)
+- Foliage blocking with configurable modes (block, slow detection, off)
+- Grenade reaction restricted to thrower-only when bot has visual on throw
+- Unidentified gunshots still trigger alert reaction
+- Blind return fire when under fire without visual contact
+
+### Debug diagnostics
+- FIRST KNOWN diagnostic logging for boss/raider initial targeting
+- Perception gate diagnostic logging
+- `DEBUG_ENEMYPLAYER_ISYOURPLAYER` conditional compilation symbol for player-specific vision tracing
+
 ## Requirements
 - [BigBrain](https://hub.sp-tarkov.com/files/file/1219-bigbrain/) by DrakiaXYZ
 - [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-navmesh/) by DrakiaXYZ
