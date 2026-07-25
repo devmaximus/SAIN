@@ -351,10 +351,21 @@ public class EnemyKnownPlaces
 #endif
             return;
         }
+        bool isFirstKnown = LastKnownPlace == null;
         SearchedAllKnownLocations = false;
         TimeLastKnownUpdated = currentTime;
         LastKnownPlace = place;
         Enemy.Events.LastKnownUpdated(place, currentTime);
+#if DEBUG
+        if (isFirstKnown)
+        {
+            string botName = Enemy.Bot?.Player?.Profile?.Nickname ?? "?";
+            string enemyName = Enemy.EnemyPlayer?.Profile?.Nickname ?? "?";
+            string source = place.PlaceType.ToString();
+            float dist = Enemy.RealDistance;
+            Logger.LogDebug($"[PerceptionGate] FIRST KNOWN: {botName} now targets {enemyName} via {source} at {dist:F0}m (pos={place.Position})");
+        }
+#endif
     }
 
     public float TimeLastKnownUpdated { get; private set; } = -1000f;
