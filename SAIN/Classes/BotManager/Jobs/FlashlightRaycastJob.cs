@@ -111,14 +111,16 @@ public class FlashlightRaycastJob : SainJobTemplate, IDisposable
                     }
                 }
 
-                //if (Player.Player.IsYourPlayer)
-                //{
-                //    Logger.LogDebug($"player has {LightPoints.Count} light points");
-                //    foreach (var point in LightPoints)
-                //    {
-                //        DebugGizmos.Line(Player.Transform.WeaponFirePort, point, 0.025f, 0.02f, true);
-                //    }
-                //}
+#if DEBUG_ENEMYPLAYER_ISYOURPLAYER
+                if (Player.Player.IsYourPlayer)
+                {
+                    Logger.LogDebug($"[Flashlight] lightPoints={LightPoints.Count}");
+                    foreach (var point in LightPoints)
+                    {
+                        DebugGizmos.Line(Player.Transform.WeaponFirePort, point, 0.025f, 0.02f, true);
+                    }
+                }
+#endif
             }
         }
     }
