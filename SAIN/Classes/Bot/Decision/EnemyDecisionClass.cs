@@ -84,6 +84,19 @@ public class EnemyDecisionClass : BotBase
             result = ECombatDecision.StandAndShoot;
             return true;
         }
+
+        if (!enemy.IsVisible && shallBlindReturnFire(enemy))
+        {
+#if DEBUG
+            if (SAINPlugin.DebugMode)
+            {
+                DecisionReasons.AppendLine($"2b. Blind Return Fire: underFire, has lastKnown, suppressing");
+            }
+            Logger.LogDebug($"[PerceptionGate] BLIND RETURN FIRE: {Bot.Player?.Profile?.Nickname} firing toward last known (no visual)");
+#endif
+            Bot.Suppression.TrySuppressEnemy(enemy, false);
+        }
+
         bool shallShootDistant = shallShootDistantEnemy(enemy, out reason);
 #if DEBUG
         if (SAINPlugin.DebugMode)
@@ -594,6 +607,30 @@ public class EnemyDecisionClass : BotBase
     private float ShiftCoverResetTime
     {
         get { return CoverSettings.ShiftCoverResetTime; }
+    }
+
+    private const float BLIND_FIRE_REACT_TIME = 1.5f;
+
+    private bool shallBlindReturnFire(Enemy enemy)
+    {
+        if (!BotOwner.Memory.IsUnderFire)
+            return false;
+
+        if (BotOwner.WeaponManager?.HaveBullets != true)
+            return false;
+
+        if (enemy.KnownPlaces.LastKnownPosition == null)
+            return false;
+
+        if (enemy.TimeSinceSeen < BLIND_FIRE_REACT_TIME)
+            return false;
+
+        var status = enemy.Status;
+        bool recentlyShot = status.ShotAtMe || status.ShotMe;
+        if (!recentlyShot)
+            return false;
+
+        return true;
     }
 
     private float _nextShootDistTargetTime;
