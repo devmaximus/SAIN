@@ -46,21 +46,17 @@ public class EnemyKnownChecker(EnemyData enemyData)
         var places = Enemy.KnownPlaces;
         if (places.LastKnownPlace == null)
         {
-            //if (Enemy.EnemyKnown)
-            //    Logger.LogDebug("enemy null lastknown");
             return false;
         }
 
         float timeSinceUpdate = currentTime - places.TimeLastKnownUpdated;
+        float effectiveLimit = CalcEffectiveForgetLimit();
 
-        //if (Enemy.EnemyKnown && Enemy.EnemyPlayer.IsYourPlayer)
-        //    Logger.LogDebug($"timesince update [{timeSinceUpdate}]");
-
-        if (timeSinceUpdate > LAST_KNOWN_TIME_UPDATE_UPPER_LIMIT)
+        if (timeSinceUpdate > effectiveLimit)
         {
-            //if (Enemy.EnemyKnown)
-            //    Logger.LogDebug("enemy forgotten becuz update too long");
-
+#if DEBUG
+            Logger.LogDebug($"[PerceptionGate] FORGET: {Enemy.Bot?.Player?.Profile?.Nickname} forgetting enemy (limit={effectiveLimit:F0}s, elapsed={timeSinceUpdate:F0}s, everSeen={Enemy.Seen}, dist={Enemy.RealDistance:F0}m)");
+#endif
             return false;
         }
 
@@ -74,13 +70,35 @@ public class EnemyKnownChecker(EnemyData enemyData)
             return true;
         }
 
-        //if (Enemy.EnemyKnown)
-        //    Logger.LogDebug($"enemy forgotten. timesinceupdate: {timeSinceUpdate} forgetenemytime: {Bot.Info.ForgetEnemyTime}");
-
         return false;
     }
 
     private const float LAST_KNOWN_TIME_UPDATE_UPPER_LIMIT = 400f;
+    private const float NEVER_SEEN_CLOSE_LIMIT = 60f;
+    private const float NEVER_SEEN_FAR_LIMIT = 30f;
+    private const float NEVER_SEEN_FAR_DISTANCE = 100f;
+    private const float SEEN_RECENTLY_LIMIT = 120f;
+    private const float SEEN_LONG_AGO_LIMIT = 60f;
+    private const float SEEN_LONG_AGO_THRESHOLD = 60f;
+
+    private float CalcEffectiveForgetLimit()
+    {
+        bool everSeen = Enemy.Seen;
+        float distance = Enemy.RealDistance;
+
+        if (!everSeen)
+        {
+            if (distance > NEVER_SEEN_FAR_DISTANCE)
+                return NEVER_SEEN_FAR_LIMIT;
+            return NEVER_SEEN_CLOSE_LIMIT;
+        }
+
+        float timeSinceSeen = Enemy.TimeSinceSeen;
+        if (timeSinceSeen > SEEN_LONG_AGO_THRESHOLD)
+            return SEEN_LONG_AGO_LIMIT;
+
+        return SEEN_RECENTLY_LIMIT;
+    }
 
     public bool BotIsSearchingForMe()
     {
