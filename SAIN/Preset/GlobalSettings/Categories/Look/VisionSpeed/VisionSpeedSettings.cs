@@ -9,6 +9,8 @@ public class VisionSpeedSettings : SAINSettingsBase<VisionSpeedSettings>, ISAINS
 
     public MovementVisibilitySettings Movement = new();
 
+    public OpticsVisionSettings Optics = new();
+
     public PartsVisibilitySettings PartsVisibility = new();
 
     public PeripheralVisionSettings Peripheral = new();
@@ -22,6 +24,7 @@ public class VisionSpeedSettings : SAINSettingsBase<VisionSpeedSettings>, ISAINS
         list.Add(this);
         list.Add(Elevation);
         list.Add(Movement);
+        list.Add(Optics);
         list.Add(PartsVisibility);
         list.Add(Peripheral);
         list.Add(Pose);
@@ -29,10 +32,49 @@ public class VisionSpeedSettings : SAINSettingsBase<VisionSpeedSettings>, ISAINS
     }
 }
 
+public class OpticsVisionSettings : SAINSettingsBase<OpticsVisionSettings>, ISAINSettings
+{
+    public string Description =
+        "Limits bot detection range based on equipped optic magnification. "
+        + "Bots with iron sights cannot detect at sniper ranges.";
+
+    public bool Enabled = true;
+
+    [Name("Naked Eye Max Range")]
+    [Description("Maximum detection range (meters) with no optics or 1x sights.")]
+    [MinMax(50f, 300f, 1f)]
+    [Advanced]
+    public float NakedEyeMaxRange = 150f;
+
+    [Name("Low Zoom Max Range")]
+    [Description("Maximum detection range (meters) with 2-5.9x optics.")]
+    [MinMax(100f, 500f, 1f)]
+    [Advanced]
+    public float LowZoomMaxRange = 250f;
+
+    [Name("High Zoom Max Range")]
+    [Description("Maximum detection range (meters) with 6x+ optics.")]
+    [MinMax(200f, 800f, 1f)]
+    [Advanced]
+    public float HighZoomMaxRange = 400f;
+
+    [Name("Beyond Range Penalty")]
+    [Description("Detection speed multiplier when target is beyond max range. Lower = harder to detect. 0.05 = 95% slower.")]
+    [MinMax(0.01f, 0.5f, 100f)]
+    [Advanced]
+    public float BeyondRangePenalty = 0.05f;
+
+    [Name("At Range Penalty")]
+    [Description("Detection speed multiplier at exactly max range. Interpolates from 1.0 at half-range to this value at max range.")]
+    [MinMax(0.05f, 0.75f, 100f)]
+    [Advanced]
+    public float AtRangePenalty = 0.15f;
+}
+
 public class PeripheralVisionSettings : SAINSettingsBase<PeripheralVisionSettings>, ISAINSettings
 {
     public string Description =
-        "Adds additional vision speed reduction to targets in a bot's peripheral vision."
+        "Adds additional vision speed reduction to targets in a bot's peripheral vision. "
         + "Scales with the angle from their look direction.";
 
     public bool Enabled = true;
@@ -44,6 +86,54 @@ public class PeripheralVisionSettings : SAINSettingsBase<PeripheralVisionSetting
     [MinMax(1f, 3f, 100f)]
     [Advanced]
     public float PERIPHERAL_VISION_MAX_REDUCTION_COEF = 2f;
+
+    [Name("Direct Front Angle")]
+    [Description("Targets within this angle (degrees) from center get fastest detection.")]
+    [MinMax(1f, 15f, 1f)]
+    [Advanced]
+    public float DirectFrontAngle = 3f;
+
+    [Name("Direct Front Modifier")]
+    [Description("Detection speed modifier for targets in direct front cone. Lower = faster detection.")]
+    [MinMax(0.1f, 1f, 100f)]
+    [Advanced]
+    public float DirectFrontMod = 0.66f;
+
+    [Name("Close Front Angle")]
+    [Description("Targets within this angle but outside direct front get slightly faster detection.")]
+    [MinMax(3f, 30f, 1f)]
+    [Advanced]
+    public float CloseFrontAngle = 6f;
+
+    [Name("Close Front Modifier")]
+    [Description("Detection speed modifier for close front targets.")]
+    [MinMax(0.1f, 1f, 100f)]
+    [Advanced]
+    public float CloseFrontMod = 0.8f;
+
+    [Name("Very Close Enemy Distance")]
+    [Description("Enemies closer than this (meters) are detected faster regardless of angle.")]
+    [MinMax(1f, 15f, 1f)]
+    [Advanced]
+    public float VeryCloseEnemyDist = 5f;
+
+    [Name("Very Close Enemy Modifier")]
+    [Description("Detection speed modifier for very close enemies.")]
+    [MinMax(0.1f, 1f, 100f)]
+    [Advanced]
+    public float VeryCloseEnemyMod = 0.8f;
+
+    [Name("Close Enemy Distance")]
+    [Description("Enemies closer than this (meters) get slightly faster detection regardless of angle.")]
+    [MinMax(5f, 30f, 1f)]
+    [Advanced]
+    public float CloseEnemyDist = 10f;
+
+    [Name("Close Enemy Modifier")]
+    [Description("Detection speed modifier for close enemies.")]
+    [MinMax(0.1f, 1f, 100f)]
+    [Advanced]
+    public float CloseEnemyMod = 0.9f;
 }
 
 public class ThirdPartySettings : SAINSettingsBase<ThirdPartySettings>, ISAINSettings

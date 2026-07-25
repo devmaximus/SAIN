@@ -17,33 +17,18 @@ public static class EnemyGainSightClass
 
     private const float FOLIAGE_VISION_SPEED_PENALTY = 0.15f;
 
-    private const float OPTICS_NAKED_EYE_MAX_RANGE = 150f;
-    private const float OPTICS_LOW_ZOOM_MAX_RANGE = 250f;
-    private const float OPTICS_HIGH_ZOOM_MAX_RANGE = 400f;
-    private const float OPTICS_BEYOND_RANGE_PENALTY = 0.05f;
-    private const float OPTICS_AT_RANGE_PENALTY = 0.15f;
-
     private static float CalcOpticsMod(Enemy enemy)
     {
-        float distance = enemy.RealDistance;
-        float maxRange = GetMaxDetectionRange(enemy.Bot);
-
-        if (distance <= maxRange * 0.5f)
-            return 1f;
-
-        if (distance > maxRange)
-            return OPTICS_BEYOND_RANGE_PENALTY;
-
-        float t = Mathf.InverseLerp(maxRange * 0.5f, maxRange, distance);
-        return Mathf.Lerp(1f, OPTICS_AT_RANGE_PENALTY, t);
-    }
-
-    private static float GetMaxDetectionRange(BotComponent bot)
-    {
-        float magnification = GetCurrentMagnification(bot);
-        if (magnification >= 6f) return OPTICS_HIGH_ZOOM_MAX_RANGE;
-        if (magnification >= 2f) return OPTICS_LOW_ZOOM_MAX_RANGE;
-        return OPTICS_NAKED_EYE_MAX_RANGE;
+        var optics = Settings.Optics;
+        if (!optics.Enabled) return 1f;
+        return VisionMath.CalcOpticsModifier(
+            enemy.RealDistance,
+            GetCurrentMagnification(enemy.Bot),
+            optics.NakedEyeMaxRange,
+            optics.LowZoomMaxRange,
+            optics.HighZoomMaxRange,
+            optics.BeyondRangePenalty,
+            optics.AtRangePenalty);
     }
 
     private static float GetCurrentMagnification(BotComponent bot)
@@ -126,14 +111,6 @@ public static class EnemyGainSightClass
         get { return Settings.Peripheral.PERIPHERAL_VISION_MAX_REDUCTION_COEF; }
     }
 
-    private const float PERIPHERAL_VISION_SPEED_DIRECT_FRONT_ANGLE = 3f;
-    private const float PERIPHERAL_VISION_SPEED_DIRECT_FRONT_MOD = 0.66f;
-    private const float PERIPHERAL_VISION_SPEED_CLOSE_FRONT_ANGLE = 6f;
-    private const float PERIPHERAL_VISION_SPEED_CLOSE_FRONT_MOD = 0.8f;
-    private const float PERIPHERAL_VISION_SPEED_ENEMY_CLOSE_DIST = 10;
-    private const float PERIPHERAL_VISION_SPEED_ENEMY_CLOSE_MOD = 0.9f;
-    private const float PERIPHERAL_VISION_SPEED_ENEMY_VERYCLOSE_DIST = 5;
-    private const float PERIPHERAL_VISION_SPEED_ENEMY_VERYCLOSE_MOD = 0.8f;
 
     private static float PRONE_VISION_SPEED_COEF
     {
@@ -308,21 +285,7 @@ public static class EnemyGainSightClass
 
     private static float CalcVisionSpeedPositional(float distance, float minSpeedCoef, float minDist, float maxDist, SeenSpeedCheck check)
     {
-        if (distance <= minDist)
-        {
-            return minSpeedCoef;
-        }
-        if (distance >= maxDist)
-        {
-            return 1f;
-        }
-
-        float num = maxDist - minDist;
-        float num2 = distance - minDist;
-        float ratio = num2 / num;
-        float result = Mathf.Lerp(minSpeedCoef, 1f, ratio);
-        //Logger.LogInfo($"{check} Distance from Position: {distance} Result: {result}");
-        return result;
+        return VisionMath.CalcPositionalSpeed(distance, minSpeedCoef, minDist, maxDist);
     }
 
     private static float CalcTimeModifier(bool flareEnabled, Enemy Enemy)
@@ -652,41 +615,21 @@ public static class EnemyGainSightClass
 
     private static float CalcAngleMod(Enemy Enemy)
     {
-        if (Settings.Peripheral.Enabled == false)
-        {
-            return 1f;
-        }
-        float angle = Enemy.Vision.Angles.AngleToEnemyHorizontal;
-        if (angle < PERIPHERAL_VISION_SPEED_DIRECT_FRONT_ANGLE)
-        {
-            return PERIPHERAL_VISION_SPEED_DIRECT_FRONT_MOD;
-        }
-        if (angle < PERIPHERAL_VISION_SPEED_CLOSE_FRONT_ANGLE)
-        {
-            return PERIPHERAL_VISION_SPEED_CLOSE_FRONT_MOD;
-        }
-        if (Enemy.RealDistance < PERIPHERAL_VISION_SPEED_ENEMY_VERYCLOSE_DIST)
-        {
-            return PERIPHERAL_VISION_SPEED_ENEMY_VERYCLOSE_MOD;
-        }
-        if (Enemy.RealDistance < PERIPHERAL_VISION_SPEED_ENEMY_CLOSE_DIST)
-        {
-            return PERIPHERAL_VISION_SPEED_ENEMY_CLOSE_MOD;
-        }
-        float minAngle = PERIPHERAL_VISION_START_ANGLE;
-        if (angle < minAngle)
-        {
-            return 1f;
-        }
-        float maxAngle = Enemy.Vision.Angles.MaxVisionAngle;
-        float maxRatio = PERIPHERAL_VISION_MAX_REDUCTION_COEF;
-        if (angle > maxAngle)
-        {
-            return maxRatio;
-        }
-        float angleDiff = maxAngle - minAngle;
-        float enemyAngleDiff = angle - minAngle;
-        float ratio = enemyAngleDiff / angleDiff;
-        return Mathf.Lerp(1f, maxRatio, ratio);
+        var peri = Settings.Peripheral;
+        if (!peri.Enabled) return 1f;
+        return VisionMath.CalcAngleModifier(
+            Enemy.Vision.Angles.AngleToEnemyHorizontal,
+            Enemy.RealDistance,
+            peri.DirectFrontAngle,
+            peri.DirectFrontMod,
+            peri.CloseFrontAngle,
+            peri.CloseFrontMod,
+            peri.VeryCloseEnemyDist,
+            peri.VeryCloseEnemyMod,
+            peri.CloseEnemyDist,
+            peri.CloseEnemyMod,
+            peri.PERIPHERAL_VISION_START_ANGLE,
+            Enemy.Vision.Angles.MaxVisionAngle,
+            peri.PERIPHERAL_VISION_MAX_REDUCTION_COEF);
     }
 }
