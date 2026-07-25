@@ -122,12 +122,21 @@ public class GrenadeReactionClass : BotSubClass<BotGrenadeManager>, IBotClass
             return;
         }
         Enemy enemy = Bot.EnemyController.GetEnemy(profileId, false);
-        if (enemy != null && enemy.RealDistance <= MAX_ENEMY_GRENADE_DIST_TOCARE)
+        bool throwerVisible = enemy != null && enemy.IsVisible;
+
+        if (throwerVisible && enemy.RealDistance <= MAX_ENEMY_GRENADE_DIST_TOCARE)
         {
             EnemyGrenadesList.Add(grenade, new GrenadeTrackerClass(Bot, grenade, dangerPoint, GetReactionTime()));
             grenade.DestroyEvent += RemoveGrenade;
+#if DEBUG
+            Logger.LogDebug($"[PerceptionGate] Grenade: {Bot.Player?.Profile?.Nickname} SAW thrower — enemy targeted");
+#endif
             return;
         }
+
+#if DEBUG
+        Logger.LogDebug($"[PerceptionGate] Grenade: {Bot.Player?.Profile?.Nickname} reacts to explosion at {dangerPoint} — thrower NOT identified (visible={throwerVisible})");
+#endif
         BotOwner.BewareGrenade.AddGrenadeDanger(dangerPoint, grenade);
     }
 
