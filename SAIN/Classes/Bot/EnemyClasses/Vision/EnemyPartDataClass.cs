@@ -101,7 +101,7 @@ public class EnemyPartDataClass
     private Vector3 GetCastPoint(BodyPartCollider collider)
     {
         float size = GetColliderMinSize(collider);
-#if PLAYER_VISION_TRACE
+#if DEBUG_ENEMYPLAYER_ISYOURPLAYER
         Logger.LogInfo($"[PartData] colliderMinSize={size:F3}");
 #endif
         Vector3 random = UnityEngine.Random.insideUnitSphere * size;

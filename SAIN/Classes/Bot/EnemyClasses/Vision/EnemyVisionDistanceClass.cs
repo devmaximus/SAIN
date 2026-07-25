@@ -59,7 +59,7 @@ public class EnemyVisionDistanceClass : EnemyBase
         float defaultVisDist = BotOwner.LookSensor.VisibleDist;
         float result = (defaultVisDist * finalModifier) - defaultVisDist;
 
-#if PLAYER_VISION_TRACE
+#if DEBUG_ENEMYPLAYER_ISYOURPLAYER
         if (EnemyPlayer.IsYourPlayer && _nextLogTime < Time.time)
         {
             _nextLogTime = Time.time + 0.5f;
@@ -75,7 +75,7 @@ public class EnemyVisionDistanceClass : EnemyBase
         float velocity = Enemy.Vision.EnemyVelocity;
         float result = Mathf.Lerp(0.9f, _sprintMod, velocity);
 
-#if PLAYER_VISION_TRACE
+#if DEBUG_ENEMYPLAYER_ISYOURPLAYER
         if (EnemyPlayer.IsYourPlayer && _nextLogTime < Time.time)
         {
             Logger.LogWarning($"[VisDist:Move] velocity={velocity:F2} mod={result:F2}");
@@ -154,7 +154,7 @@ public class EnemyVisionDistanceClass : EnemyBase
     private float _nextCalcTime;
     private float _calcFreq = 0.05f;
     private float _visionDist;
-#if PLAYER_VISION_TRACE
+#if DEBUG_ENEMYPLAYER_ISYOURPLAYER
     private float _nextLogTime;
 #endif
 }

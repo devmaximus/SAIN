@@ -199,7 +199,7 @@ public static class EnemyGainSightClass
             * foliageMod
             * opticsMod;
 
-#if PLAYER_VISION_TRACE
+#if DEBUG_ENEMYPLAYER_ISYOURPLAYER
         if (enemy.EnemyPlayer.IsYourPlayer)
         {
             Logger.LogWarning($"[GainSight] result={result:F3} underFire={underFireMod:F2} parts={partMod:F2} gear={gearMod:F2} weather={weatherMod:F2} time={timeMod:F2} move={moveMod:F2} elev={elevMod:F2} thirdParty={thirdPartyMod:F2} angle={angleMod:F2} notLook={notLookMod:F2} unknown={unknownMod:F2} pose={poseMod:F2} foliage={foliageMod:F2} optics={opticsMod:F2}");
