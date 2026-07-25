@@ -1,105 +1,144 @@
-# Solarint's AI Modifications
+# SAIN — Solarint's AI Modifications
 
-A Bepinex plugin for Single-player Escape From Tarkov that replaces the combat AI of almost all NPCs.
+> Fork: [devmaximus/SAIN](https://github.com/devmaximus/SAIN) | Branch: `feature/optics-vision-cap`
+>
+> Upstream: [ArchangelWTF/SAIN](https://github.com/ArchangelWTF/SAIN)
 
-## Major features
+A BepInEx plugin for SPT that replaces the combat AI of almost all NPCs.
 
-- [Behavior and Decision System]: Bot decision trees replaced to immitate players with further depth and unpredictability.
-- [Dynamic Cover System]: Bots find and analyze colliders in their proximity to create cover points on any map. 
-	- All it needs is a suitable navmesh, a coordinate to take cover from, and colliders. 
-	- No pre-placed cover positions are used. 
-- [Multi-threaded Bot Vision Raycasting]: Bot vision is replaced with a multi-threaded function to improve performance, update rate, and accuracy. 
-- [Advanced Bot Movement]: Bots can vault, lean around corners while peeking, strafe, stutter-sprint, and jump. 
-- [Bot Personality System]: Different personalities of bots are assigned based on the quality/cost of their equipment and random chance. 
-	- These personalities dramatically affect their behavior and available actions - such as intentionally ratting and hiding, or rushing as fast as they can.
-- [In-Game GUI with Live Updates]: Press F6 by default to open up SAIN's in-game GUI bot editor allowing you to customize almost any aspect of bot behavior for any bot type or personality.
-	- When a player hits "Save and Export" in the GUI. All changes to bots are sent and updated immedietly, unless otherwise specificied for certain options that require raid/game restart.
-- [User Preset System]: All config options are tied to a "Preset" which can be shared and imported easily.
-- [Squad Coordination and Barks]: Groups of bots will intentionally coordinate to flank/suppress and yell out orders that reflect what they are thinking/doing. 
-- [Player Flashlight Detection]: Bots can see human player flashlights, giving them an estimated position when spotted. 
-	- Bots are affected by lights being shined in their eyes from close range, affecting their accuracy and vision.
-	- Bots can only see IR lights and lasers when using NVGs.
-	- When shining a white-light on a bot using NVGs at close range, they are "Dazzled" more intensely.
-- [Bot Suppression System]: Bots receive simulated suppression when bullets are flying near them, debuffing them in most of their stats - depending on the intensity and caliber of ammo fired.
-- [Bot Equipment Effects]: 
-	- Different gear and equipment will positively or negatively affect bot stats where it makes sense. 
-		- Such as a heavy helmet making their hearing worse, or a magnified optic improving their accuracy at far distances, but worsening it at close range.
-		- Their weapon build also has a dramatic affect on how they fire at an enemy, for example a bot using a meta-build M4A1 will be able to shoot full auto accurately from further away than a stock M4A1.
-		- The effects are pulled directly from their weapon's stats so it will automatically change depending on balancing. If you remove all recoil for your guns, bots will also have no recoil.
-- [Player Equipment Effects]: Some choices of gear by the player can positively or negatively affect their detection time and distance by AI dramatically.
-- [Simulated Recoil for Bots]: Bots will be affected by simulated recoil depending on their weapon build, the type of weapon being fired, and their own skill level.
-- [Improved Bot Vision]: More nuance and buffs/debuffs to roughly immitate how a real person spots enemies.
-	- Things like movement speed and crouch height have more affect on stealth.
-- [Sound Based Responses]: Most sounds that a player makes are now audible to AI, allowing them to make specific decisions if conditions are right.
-	- Such as bots rushing an enemy if they hear them healing.
-- [Bot Hearing Revamp]: Bots are much more nuanced in how they hear enemies, the distance a bot can hear things like footsteps is affected by their own health condition, movement, walls and obstacles between them, weather conditions.
+---
 
-## Fork changes (devmaximus/SAIN — feature/optics-vision-cap)
+## What's changed in this fork
 
-### Perception fairness — optics-based detection range cap
-Bots can no longer detect at sniper ranges with iron sights. Detection range is now gated by equipped optic magnification (naked eye 150m, 2-4x 250m, 6x+ 400m). All thresholds configurable via F12.
+### Optics-based detection range cap
 
-### Vision system refactoring
-- Pure math extracted to `VisionMath.cs` — all thresholds are configurable parameters, zero hardcoded magic values
-- 37 unit tests covering optics range, angle modifiers, positional speed, lerp math
-- Commented-out debug code replaced with `#if DEBUG_ENEMYPLAYER_ISYOURPLAYER` conditional compilation
-- New `OpticsVisionSettings` and expanded `PeripheralVisionSettings` config blocks
+Bots can no longer detect at sniper ranges with iron sights. Detection range is gated by equipped optic magnification. All thresholds configurable via F12.
+
+| Optics | Max Detection Range | Default |
+|--------|-------------------|---------|
+| Naked eye / 1x | `NakedEyeMaxRange` | 150m |
+| Low zoom (2-5.9x) | `LowZoomMaxRange` | 250m |
+| High zoom (6x+) | `HighZoomMaxRange` | 400m |
+
+| Zone | Modifier | Effect |
+|------|----------|--------|
+| Within 50% of max range | 1.0x | No penalty |
+| 50% to max range | Interpolated | Progressive slowdown |
+| At max range | `AtRangePenalty` (0.15) | 85% slower detection |
+| Beyond max range | `BeyondRangePenalty` (0.05) | 95% slower detection |
+
+### Peripheral vision (expanded config)
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `DirectFrontAngle` | 3 deg | Fastest detection cone |
+| `DirectFrontMod` | 0.66 | Speed modifier in front cone |
+| `CloseFrontAngle` | 6 deg | Secondary detection cone |
+| `CloseFrontMod` | 0.8 | Speed modifier |
+| `VeryCloseEnemyDist` | 5m | Override angle at close range |
+| `CloseEnemyDist` | 10m | Override angle at medium range |
+| `PERIPHERAL_VISION_START_ANGLE` | 30 deg | Peripheral zone begins |
+| `PERIPHERAL_VISION_MAX_REDUCTION_COEF` | 2.0 | Max slowdown in periphery |
 
 ### Perception gates
-- Evidence-based forget timers replace flat 400s cap
-- Distance-based sound source identification probability
-- Squad position sharing gated by communication range + position degrades with distance
-- BSG `ReportAboutEnemy` gated by 50m comms range (prevents cross-map telepathy)
-- Foliage blocking with configurable modes (block, slow detection, off)
-- Grenade reaction restricted to thrower-only when bot has visual on throw
-- Unidentified gunshots still trigger alert reaction
-- Blind return fire when under fire without visual contact
 
-### Debug diagnostics
-- FIRST KNOWN diagnostic logging for boss/raider initial targeting
-- Perception gate diagnostic logging
-- `DEBUG_ENEMYPLAYER_ISYOURPLAYER` conditional compilation symbol for player-specific vision tracing
+| Feature | Description |
+|---------|-------------|
+| Evidence-based forget timers | Replace flat 400s cap with time-decay based on last seen/heard |
+| Sound ID probability | Distance-based chance to identify sound source |
+| Squad comms range | Position sharing gated by 50m range; accuracy degrades with distance |
+| BSG ReportAboutEnemy gate | Blocks cross-map telepathic position sharing (50m comms check) |
+| Foliage blocking | 3 modes: block LOS, slow detection (0.15x), or off |
+| Grenade reaction | Thrower-only when bot has visual on throw event |
+| Blind return fire | Fire toward last-known direction when under fire without visual |
+| Unidentified gunshots | Still trigger alert reaction even without source ID |
+
+### Vision system refactoring
+
+| Change | Detail |
+|--------|--------|
+| `VisionMath.cs` | Pure math functions — zero game-object deps, all thresholds as parameters |
+| Unit tests | 37 tests covering optics, angles, positional speed, lerp |
+| Debug code | `#if DEBUG_ENEMYPLAYER_ISYOURPLAYER` replaces commented-out blocks |
+| Config blocks | New `OpticsVisionSettings` + expanded `PeripheralVisionSettings` |
+
+### 13-factor gain-sight pipeline
+
+Every detection check multiplies these modifiers together:
+
+| # | Factor | What it does |
+|---|--------|-------------|
+| 1 | `underFireMod` | 0.5x faster if enemy shooting at bot |
+| 2 | `partMod` | Body part visibility count |
+| 3 | `gearMod` | Stealth gear penalty by distance |
+| 4 | `weatherMod` | Rain, fog, clouds |
+| 5 | `timeMod` | Time of day / night |
+| 6 | `moveMod` | Target movement speed |
+| 7 | `elevMod` | Elevation difference |
+| 8 | `thirdPartyMod` | Third-party interference angle |
+| 9 | `angleMod` | Peripheral vision (config above) |
+| 10 | `notLookMod` | Target not facing bot |
+| 11 | `unknownMod` | Previously unknown enemy |
+| 12 | `poseMod` | Crouch / prone |
+| 13 | `foliageMod` | 0.15x through foliage |
+| 14 | `opticsMod` | Equipment range cap (config above) |
+
+---
+
+## Features (upstream)
+
+| System | Description |
+|--------|-------------|
+| Behavior & Decisions | Replaced decision trees mimicking player tactics |
+| Dynamic Cover | Runtime cover-point analysis from colliders — no pre-placed positions |
+| Vision Raycasting | Multi-threaded, improved update rate and accuracy |
+| Movement | Vault, lean, strafe, stutter-sprint, jump |
+| Personalities | Equipment-based personality assignment affecting behavior |
+| In-Game GUI (F6) | Live bot editor — changes apply immediately |
+| Presets | Shareable config presets |
+| Squad Coordination | Flank/suppress coordination with vocal barks |
+| Flashlight Detection | Detects white lights, lasers, IR (NVG-only); dazzle effect |
+| Suppression | Caliber-based debuffs from nearby fire |
+| Equipment Effects | Gear affects bot stats (helmets reduce hearing, optics affect accuracy) |
+| Player Equipment Effects | Player gear affects detection time/distance |
+| Simulated Recoil | Weapon build + skill level affect bot recoil |
+| Sound Responses | Audible player actions trigger AI decisions (healing rush, etc.) |
+| Hearing Revamp | Distance affected by health, movement, walls, weather |
+
+---
 
 ## Requirements
-- [BigBrain](https://hub.sp-tarkov.com/files/file/1219-bigbrain/) by DrakiaXYZ
-- [Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-navmesh/) by DrakiaXYZ
 
-## Installation
-1. Confirm you have properly chosen the correct version of SAIN for the version of SPT you have installed. SAIN can only load for with the specific EFT version it was built for.
-2. Install Dependencies listed above.
-3. Extract zip file contents into your SPT install directory.
-4. Done! If SAIN is installed and working, you can open the GUI in the main menu. (F6 by default)
+| Dependency | Version | Link |
+|------------|---------|------|
+| BigBrain | 1.x+ | [DrakiaXYZ/SPT-BigBrain](https://hub.sp-tarkov.com/files/file/1219-bigbrain/) |
+| Waypoints | 1.x+ | [DrakiaXYZ/SPT-Waypoints](https://hub.sp-tarkov.com/files/file/1119-waypoints-expanded-navmesh/) |
 
-## Contributing
-SAIN is an open source project, and I welcome anyone who wants to redesign, tweak, or add any features in the codebase.
+## Install
 
-## How It Works
-Escape from Tarkov's AI system works off a system with "Layers" of different behavior trees set at specific priorities. Using BigBrain, I have disabled and replaced bot "Combat Layers" with my own.
-Each Bot receives a "SAINComponent" upon being spawned by the game, this runs in parellel to the default "BotOwner" component.
-Similarly, for each of a bot's enemies, called "EnemyInfo"s - a SAIN "Enemy" instance is created that contains properties and data tracked and used by their SAINComponent. 
-Bot Decisions are calculated from a class instance within their "BotComponent". The priority of each decision is based on the heirarchy within the function. Currently that priority is hardcoded, and needs a generic system to add or remove decisions, and configure priorities.
+1. Match SAIN version to your SPT/EFT version
+2. Install BigBrain + Waypoints
+3. Extract zip to SPT install directory
+4. Verify: F6 opens SAIN GUI from main menu
 
-## Support SAIN's Development
-SAIN is a project of countless unpaid hours over the past years. 
-If you love the mod and want to financially support me, if can be done via my [Patreon Page](https://www.patreon.com/c/Solarint)
-I'm currently unemployed and seeking work doing Game AI Design and scripting. 
-I'm proficient in C# and Unity Scripting, self-taught with the assistance of the SPT community, and - based on SAIN's glowing reviews - I excel at designing scripts that make AI immersive and engaging to fight.
+## Build
 
-## SAIN's History
-SAIN is a first for many things for me. 
-I had 0 experience in coding or managing a project of this size when I started SAIN. 
-It originally started as a simple patch in Tarkov's code to manually swap the firerate on Bot Weapons to Semi-auto for enemies past 50 meters.
-I kept adding nuance and new features one by one until it grew into the slightly convoluted and overdesigned beast it is today!
-Because making SAIN was how I learned C# and coding in general, the quality of code can vary wildly, but I've replaced *most* of the ancient code by now.
-There are many classes that I created essentially just to see if I could, and I used them as learning experiences. 
-SAIN is very jank, in the classic style of some of my favorite games like S.T.A.L.K.E.R. and ARMA.
-It's also "Dynamic" in the sense that it is about 95% map/level agnostic, as long as the level has NavMesh to querry. 
-It should work perfectly with any future level or location revamp released in the game.
+```powershell
+dotnet build SAIN/SAIN.csproj -c Release
+```
 
-## SAIN Design Principles
-SAIN primary focus is to make challenging but fair bots by immitating player tactics in Tactical Shooters. 
-It is designed in such a way that all bots are subject to strict limitations, and make decisions based upon what a player might reasonably be able to see/hear. 
-With the exception of minor features that prioritize optimization and performance, bot behavior does not cheat nor receive any information on their enemy that couldn't reasonably be communicated between two players. 
-With that limitation, bots can perform a large variety of decisions that players tend to do in player vs player fight. Many of these are inspired by my own experience playing tactical shooters for over a decade. 
-SAIN is also built with user customization in mind. As an individual with limited resources, there are several features within SAIN that are set up with the intention that power users can tweak and share "Presets" - essentially mods for SAIN.
-Most internal configuration for AI can be changed (writing documentation for all these is tedious work), and changes made within the GUI take effect right away to see the differences live.
+Run tests:
+```powershell
+dotnet test SAIN.Tests/SAIN.Tests.csproj
+```
+
+Enable player vision tracing:
+```powershell
+dotnet build SAIN/SAIN.csproj -p:DefineConstants=DEBUG_ENEMYPLAYER_ISYOURPLAYER
+```
+
+---
+
+## Credits
+
+Original author: [Solarint](https://www.patreon.com/c/Solarint) | Current upstream maintainer: [ArchangelWTF](https://github.com/ArchangelWTF)
