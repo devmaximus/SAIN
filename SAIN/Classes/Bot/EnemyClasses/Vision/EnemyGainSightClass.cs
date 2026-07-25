@@ -2,6 +2,7 @@
 using SAIN.Components;
 using SAIN.Preset.GlobalSettings;
 using UnityEngine;
+using static SAIN.Components.VisionRaycastJob;
 
 namespace SAIN.SAINComponent.Classes.EnemyClasses;
 
@@ -12,6 +13,7 @@ public static class EnemyGainSightClass
         return CalcModifier(enemy) * CalcRepeatSeenCoef(enemy.KnownPlaces);
     }
 
+    private const float FOLIAGE_VISION_SPEED_PENALTY = 0.15f;
     private const float UNDER_FIRE_FROM_ME_COEF = 0.5f;
 
     private const float DIST_SEEN_MIN_COEF = 0.01f;
@@ -141,6 +143,13 @@ public static class EnemyGainSightClass
             notLookMod = SAINNotLooking.GetVisionSpeedDecrease(enemy.EnemyInfo);
         }
 
+        float foliageMod = 1f;
+        if (VisionRaycastJob.FoliageMode == VisionRaycastJob.EFoliageBlockMode.SlowDetection
+            && enemy.Vision.EnemyParts.FoliageObscured)
+        {
+            foliageMod = FOLIAGE_VISION_SPEED_PENALTY;
+        }
+
         float result =
             1f
             * underFireMod
@@ -154,7 +163,8 @@ public static class EnemyGainSightClass
             * angleMod
             * notLookMod
             * unknownMod
-            * poseMod;
+            * poseMod
+            * foliageMod;
 
         //if (enemy.EnemyPlayer.IsYourPlayer)
         //{

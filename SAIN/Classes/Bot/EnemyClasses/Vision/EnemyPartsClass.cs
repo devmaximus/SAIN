@@ -17,6 +17,8 @@ public class EnemyPartsClass
 
     public bool CanShoot { get; private set; }
 
+    public bool FoliageObscured { get; private set; }
+
     public Dictionary<EBodyPart, EnemyPartDataClass> Parts { get; } = [];
 
     public EnemyPartDataClass[] PartsArray { get; private set; }
@@ -26,6 +28,7 @@ public class EnemyPartsClass
         CanBeSeen = false;
         LineOfSight = false;
         CanShoot = false;
+        FoliageObscured = false;
         foreach (var part in PartsArray)
         {
             part.Update(currentTime);
@@ -44,6 +47,7 @@ public class EnemyPartsClass
                 CanBeSeen = true;
             }
         }
+        FoliageObscured = LineOfSight && !CanBeSeen;
     }
 
     private void CreatePartDatas(PlayerComponent enemyPlayer)

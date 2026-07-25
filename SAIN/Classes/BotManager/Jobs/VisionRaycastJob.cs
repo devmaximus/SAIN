@@ -12,9 +12,24 @@ namespace SAIN.Components;
 
 public class VisionRaycastJob : BotManagerBase
 {
-    private static readonly QueryParameters _losParams = new(LayerMaskClass.HighPolyWithTerrainMask);
+    private static readonly QueryParameters _losParamsNoGrass = new(LayerMaskClass.HighPolyWithTerrainNoGrassMask);
+    private static readonly QueryParameters _losParamsWithGrass = new(LayerMaskClass.HighPolyWithTerrainMask);
     private static readonly QueryParameters _visParams = new(LayerMaskClass.AI);
     private static readonly QueryParameters _shootParams = new(LayerMaskClass.HighPolyWithTerrainMaskAI);
+
+    public enum EFoliageBlockMode
+    {
+        Off = 0,
+        SlowDetection = 1,
+        BlockLOS = 2,
+    }
+
+    public static EFoliageBlockMode FoliageMode { get; set; } = EFoliageBlockMode.BlockLOS;
+
+    private static QueryParameters GetLosParams()
+    {
+        return FoliageMode == EFoliageBlockMode.BlockLOS ? _losParamsWithGrass : _losParamsNoGrass;
+    }
 
     private const float VISION_UPDATE_INTERVAL = 1f / 30f;
     private const float VISION_JOB_INTERVAL = 1f / 30f;
@@ -162,7 +177,7 @@ public class VisionRaycastJob : BotManagerBase
                 Vector3 weaponDir = weaponMag > 1e-6f ? (weaponVec / weaponMag) : Vector3.forward;
                 float weaponDist = Mathf.Max(eyeMag, MinDist);
 
-                raycastCommands[commands++] = new RaycastCommand(eyePosition, eyeDir, _losParams, eyeDist + Padding);
+                raycastCommands[commands++] = new RaycastCommand(eyePosition, eyeDir, GetLosParams(), eyeDist + Padding);
                 raycastCommands[commands++] = new RaycastCommand(eyePosition, eyeDir, _visParams, eyeDist + Padding);
                 raycastCommands[commands++] = new RaycastCommand(weaponFirePort, weaponDir, _shootParams, weaponDist + Padding);
             }
