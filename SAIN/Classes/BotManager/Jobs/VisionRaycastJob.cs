@@ -12,7 +12,7 @@ namespace SAIN.Components;
 
 public class VisionRaycastJob : BotManagerBase
 {
-    private static readonly QueryParameters _losParams = new(LayerMaskClass.HighPolyWithTerrainNoGrassMask);
+    private static readonly QueryParameters _losParams = new(LayerMaskClass.HighPolyWithTerrainMask);
     private static readonly QueryParameters _visParams = new(LayerMaskClass.AI);
     private static readonly QueryParameters _shootParams = new(LayerMaskClass.HighPolyWithTerrainMaskAI);
 
