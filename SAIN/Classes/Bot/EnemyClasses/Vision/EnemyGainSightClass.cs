@@ -1,4 +1,6 @@
-﻿using EFT;
+﻿using System.Linq;
+using EFT;
+using EFT.InventoryLogic;
 using SAIN.Components;
 using SAIN.Preset.GlobalSettings;
 using UnityEngine;
@@ -14,6 +16,57 @@ public static class EnemyGainSightClass
     }
 
     private const float FOLIAGE_VISION_SPEED_PENALTY = 0.15f;
+
+    private const float OPTICS_NAKED_EYE_MAX_RANGE = 150f;
+    private const float OPTICS_LOW_ZOOM_MAX_RANGE = 250f;
+    private const float OPTICS_HIGH_ZOOM_MAX_RANGE = 400f;
+    private const float OPTICS_BEYOND_RANGE_PENALTY = 0.05f;
+    private const float OPTICS_AT_RANGE_PENALTY = 0.15f;
+
+    private static float CalcOpticsMod(Enemy enemy)
+    {
+        float distance = enemy.RealDistance;
+        float maxRange = GetMaxDetectionRange(enemy.Bot);
+
+        if (distance <= maxRange * 0.5f)
+            return 1f;
+
+        if (distance > maxRange)
+            return OPTICS_BEYOND_RANGE_PENALTY;
+
+        float t = Mathf.InverseLerp(maxRange * 0.5f, maxRange, distance);
+        return Mathf.Lerp(1f, OPTICS_AT_RANGE_PENALTY, t);
+    }
+
+    private static float GetMaxDetectionRange(BotComponent bot)
+    {
+        float magnification = GetCurrentMagnification(bot);
+        if (magnification >= 6f) return OPTICS_HIGH_ZOOM_MAX_RANGE;
+        if (magnification >= 2f) return OPTICS_LOW_ZOOM_MAX_RANGE;
+        return OPTICS_NAKED_EYE_MAX_RANGE;
+    }
+
+    private static float GetCurrentMagnification(BotComponent bot)
+    {
+        var weapon = bot?.BotOwner?.WeaponManager?.CurrentWeapon;
+        if (weapon == null)
+            return 1f;
+
+        var sights = weapon.GetAllItems()
+            .OfType<EFT.InventoryLogic.Mod>()
+            .Select(m => m.GetItemComponent<EFT.InventoryLogic.SightComponent>())
+            .Where(s => s != null);
+
+        float maxZoom = 1f;
+        foreach (var sight in sights)
+        {
+            float zoom = sight.GetCurrentOpticZoom();
+            if (zoom > maxZoom)
+                maxZoom = zoom;
+        }
+        return maxZoom;
+    }
+
     private const float UNDER_FIRE_FROM_ME_COEF = 0.5f;
 
     private const float DIST_SEEN_MIN_COEF = 0.01f;
@@ -150,6 +203,8 @@ public static class EnemyGainSightClass
             foliageMod = FOLIAGE_VISION_SPEED_PENALTY;
         }
 
+        float opticsMod = CalcOpticsMod(enemy);
+
         float result =
             1f
             * underFireMod
@@ -164,7 +219,8 @@ public static class EnemyGainSightClass
             * notLookMod
             * unknownMod
             * poseMod
-            * foliageMod;
+            * foliageMod
+            * opticsMod;
 
         //if (enemy.EnemyPlayer.IsYourPlayer)
         //{
