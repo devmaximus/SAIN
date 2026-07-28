@@ -13,6 +13,8 @@ public class PlayerSpawnTracker
     public readonly Dictionary<string, PlayerComponent> AlivePlayersDictionary = [];
     public readonly List<IPlayer> DeadPlayers = [];
 
+    private bool _disposed;
+
     public PlayerComponent GetPlayerComponent(IPlayer Player)
     {
         if (Player != null &&
@@ -96,12 +98,11 @@ public class PlayerSpawnTracker
 
     private void AddPlayer(IPlayer iPlayer)
     {
+        if (_disposed) return;
+
         var player = iPlayer as Player;
         if (player == null)
         {
-#if DEBUG
-            Logger.LogError("Could not add PlayerComponent for non-Player type or null Player.");
-#endif
             return;
         }
 
@@ -156,6 +157,8 @@ public class PlayerSpawnTracker
 
     public void Dispose()
     {
+        _disposed = true;
+
         if (_sainGameWorld == null)
         {
             return;
